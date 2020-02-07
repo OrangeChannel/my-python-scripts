@@ -6,6 +6,7 @@ import shlex
 import subprocess
 from sys import version_info
 import argparse
+import re
 
 if version_info[0] != 3 or version_info[1] < 8:
     raise SystemError("Python version 3.8+ required!")
@@ -77,11 +78,33 @@ def checker():
     print(proc)
 
 
+def cleaner():
+    group_name = input('Group name: ')
+    title = input('Show title: ')
+    src = input('Source (TV, WEB, BD, DVD): ')
+    resolution = int(input('Resolution (1080, 720...): '))
+    paths = _check_dependencies(['fd', 'mv'])
+    cmd = '{} -e mkv'.format(paths['fd'])
+    args = shlex.split(cmd)
+    orig_names = subprocess.Popen(args, stdout=subprocess.PIPE).stdout.read().decode().splitlines()
+    orig_names = [i.rstrip() for i in orig_names]
+    for k, name in enumerate(orig_names):
+        m = re.search(r'\s(?P<num>\d{1,2})', name)
+        if m:
+            cmd = '{} "{}" "[{}] {} - {:02d} ({} {}p).mkv"'.format(paths['mv'], name, group_name, title, int(m.group('num')), src, resolution)
+            args = shlex.split(cmd)
+            subprocess.Popen(args)
+
+
+
+
+
 parser = argparse.ArgumentParser(description='Utility functions for fansubbing.', epilog=r'Issue tracker on GitHub: https://github.com/OrangeChannel', prog='fansub_utils.py', usage='%(prog)s [mode]')
 parser.add_argument('-H', '--hasher', dest='hasher', action='store_true', default=False, help='Appends a CRC32 hash to the filenames: "file.mkv" -> "file [ABCD1234].mkv"')
-parser.add_argument('-C', '--checker', dest='checker', action='store_true', default=False, help='Verifies CRC32 hashes in filenames')
+parser.add_argument('-K', '--checker', dest='checker', action='store_true', default=False, help='Verifies CRC32 hashes in filenames')
 parser.add_argument('-X', '--remover', dest='remover', action='store_true', default=False, help='Removes a CRC32 hash from filenames: "file [ABCD1234].mkv" -> "file.mkv"')
 parser.add_argument('-R', '--renamer', dest='renamer', action='store_true', default=False, help=r'Useful for batch renaming "ep##.mkv" to "[Group] Title - ## (SRC RESp).mkv"')
+parser.add_argument('-C', '--cleaner', dest='cleaner', action='store_true', default=False, help=r'Similar to renamer but works with any original filename format containing " ##" or " #"')
 
 
 def _run():
@@ -95,6 +118,8 @@ def _run():
         remover()
     elif args.checker:
         checker()
+    elif args.cleaner:
+        cleaner()
 
     else:
         print('Specify a function to run. Use `-h` for help.')
