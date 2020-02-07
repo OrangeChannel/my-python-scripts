@@ -3,11 +3,19 @@
 **This is designed to be ran inside of a (release) folder containing `.mkv` files.**
 
 ```sh
-# Prints possible options:
-python fansub_utils.py -h
+Prints possible options:
+$ python fansub_utils.py -h
 
-# Runs the renaming function
-python fansub_utils.py --renamer
+Prints renamer options:
+$ python fansub_utils.py renamer -h
+
+Runs the renaming function
+$ python fansub_utils.py renamer "Group" "Title" "BD" "1080"
+
+Run the renaming function (with prompted input)
+$ python fansub_utils.py --renamer
+$ python fansub_utils.py -R
+
 ```
 
 # Current Functions:
@@ -29,7 +37,11 @@ Before:  `[ChannelOrange] Watashi ni ga Maiorita! - 05 (BD 720p) [ABCD1234].mkv`
 
 After:  `[ChannelOrange] Watashi ni ga Maiorita! - 05 (BD 720p).mkv`
 
-## renamer `-R`
+## renamer
+
+#### Can be run with `-R` / `--renamer` or with direct input with `renamer "" "" "" ""`
+
+
 Batch renames files `ep01.mkv`, `ep02.mkv`, ...`ep13.mkv` to `[Group] Title - ## (SRC RESp).mkv`
 - i.e. `ep05.mkv` --> `[ChannelOrange] Watashi ni ga Maiorita! - 05 (BD 720p).mkv`
 
