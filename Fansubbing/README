@@ -1,0 +1,121 @@
+fansub_utils.py - Batch processing scripts for fansubbing
+=========================================================
+
+Script is designed to be ran inside of a folder containing .mkv files.
+
+For further documentation and help, run any command with `--help`:
+    i.e. $ python fansub_utils.py --help
+         $ python fansub_utils.py diff --help
+         $ python fansub_utils.py renamer cleaner --help
+
+
+Current functions:
+    checker  Verifies CRC32 hashes in filenames.
+    diff     Creates xdelta3 patches for v2 files.
+    hasher   Appends CRC32 hash to filenames.
+    remover  Removes CRC32 hash from filenames.
+    renamer  Batch renames files.
+
+
+checker
+-------
+Uses rhash to verify CRC32 hashes in filenames.
+
+Usage:
+
+    $ python fansub_utils.py checker
+
+
+
+diff
+----
+Uses xdelta3 and 7-zip to create an easy distributable patch archive
+containing auto-apply scripts for Windows and Linux.
+
+Options:
+    -D, --dryrun   Prints detected v2 files without creating patches.
+    -v, --verbose  Prints all operations' outputs.
+
+Usage:
+
+    $ python fansub_utils.py diff [OPTIONS]
+
+
+
+hasher
+------
+Uses rhash to append a CRC32 hash to filenames.
+
+Options:
+    -q, --quiet    Supress output.
+    -v, --verbose  Prints new filenames.
+
+Usage:
+
+    $ python fansub_utils.py hasher [OPTIONS]
+
+
+
+remover
+-------
+Removes CRC32 hashes from filenames along with any trailing whitespace.
+
+Options:
+    -q, --quiet    Supress output.
+    -v, --verbose  Prints new filenames.
+
+Usage:
+
+    $ python fansub_utils.py remover [OPTIONS]
+
+
+
+renamer
+-------
+Batch renames files.
+
+Usage:
+
+    $ python fansub_utils.py renamer [OPTIONS] COMMAND [ARGS]...
+
+Commands:
+    cleaner
+    ~~~~~~~
+    Renames files based on unique 1-2 digit number found in original filename.
+    Will find episode number from a '_#'/' #' or '_##'/' ##' sub-string in
+    filename.
+
+    Run with `--dryrun` to make sure your files have unique episode numbers.
+
+    If group, title, src, or res isn't specified it will be prompted for.
+
+    Options:
+        -D, --dryrun               Prints new filenames without modifying them.
+        -G, --group "Group"
+        -T, --title "Title
+        -S, --src [BD|DVD|TV|WEB]
+        -R, --res <int>
+
+    Usage:
+
+        $ python fansub_utils.py renamer cleaner [OPTIONS]
+
+
+
+    simple
+    ~~~~~~
+    Renames files from `ep##.mkv` to `[Group] Title - ## (SRC RESp).mkv`.
+
+    If group, title, src, or res isn't specified they will be prompted for.
+
+    Options:
+        -G, --group "Group"
+        -T, --title "Title
+        -S, --src [BD|DVD|TV|WEB]
+        -R, --res <int>
+        -q, --quiet                Supress output.
+        -v, --verbose              Prints new filenames.
+
+    Usage:
+
+        $ python fansub_utils.py renamer simple [OPTIONS]
