@@ -2,8 +2,10 @@
 """
 Dependencies:
     which
+    cp
     mkdir
     mv
+    rm
     fd :      https://www.archlinux.org/packages/community/x86_64/fd/ OR `cargo install fd-find`
     rhash :   https://www.archlinux.org/packages/extra/x86_64/rhash/
     rnr :     https://aur.archlinux.org/packages/rnr/ OR `cargo install rnr`
@@ -188,11 +190,16 @@ Files that are NOT unique:
 
 @cli.command()
 @click.option('-D', '--dryrun', is_flag=True, help='Prints detected v2 files without creating patches.')
+@click.option('-W', '--windows', is_flag=True, default=False, help='Creates patch script for Windows users (requires xdelta3.exe in folder).')
 @click.option('-v', '--verbose', is_flag=True, help='Prints all operations\' outputs.')
-def diff(dryrun, verbose):
+def diff(dryrun, windows, verbose):
     """Creates xdelta3 patches for v2 files.
 
 Packs patches, a README, and Windows / Linux auto-patch scripts into a .7z archive called "patches.7z".
+
+If running in --windows mode, you must have an xdelta3.exe binary in the same folder as the .mkv files.
+The exe can be downloaded from here: https://github.com/jmacd/xdelta-gpl/releases and needs to be renamed
+to `xdelta3.exe`.
 
 Should be used on files cleaned/renamed with renamer in the following format:
 
@@ -211,10 +218,9 @@ i.e.
 
 Run with `--dryrun` to see what episode patches will be created.
 """
-    paths = _check_dependencies(['fd', 'xdelta3', '7z', 'mkdir', 'rm'])
+    paths = _check_dependencies(['fd', 'xdelta3', '7z', 'mkdir', 'rm', 'mv', 'cp'])
 
-    cmd = '{} -e mkv'.format(paths['fd'])
-    args = ssplit(cmd)
+    args = ssplit('{} -e mkv'.format(paths['fd']))
     orig_names = run(args, stdout=PIPE, text=True).stdout.splitlines()
     orig_names = [i.rstrip() for i in orig_names]
 
@@ -246,34 +252,43 @@ Run with `--dryrun` to see what episode patches will be created.
             click.secho('\t--> {}'.format(new_names[num]), fg='bright_blue')
 
     if not dryrun:
-        dirargs = ssplit('{} patches'.format(paths['mkdir']))
-        mkdir = run(dirargs, stdout=PIPE, stderr=STDOUT, text=True)
-        if mkdir.stdout:
-            click.secho('ERR: ' + mkdir.stdout.rstrip(), fg='bright_red')
+        patch_args = ssplit('{} patches'.format(paths['mkdir']))
+        patch_mkdir_proc = run(patch_args, stdout=PIPE, stderr=STDOUT, text=True)
+        if patch_mkdir_proc.stdout:
+            click.secho('ERR: ' + patch_mkdir_proc.stdout.rstrip(), fg='bright_red')
             exit()
 
-        dirargs = ssplit('{} patches/vcdiff'.format(paths['mkdir']))
-        mkdir = run(dirargs, stdout=PIPE, stderr=STDOUT, text=True)
-        if mkdir.stdout:
-            click.secho('ERR: ' + mkdir.stdout.rstrip(), fg='bright_red')
+        if windows:
+            mv_xdelta_args = ssplit('{} xdelta3.exe patches'.format(paths['mv']))
+            mvx = run(mv_xdelta_args, stdout=PIPE, stderr=STDOUT, text=True)
+            if mvx.stdout:
+                click.secho('ERR: ' + mvx.stdout.rstrip(), fg='bright_red')
+                click.secho('Running with --windows requires an xdelta3.exe file in the folder.', fg='bright_red')
+                run(ssplit('{} -r patches'.format(paths['rm'])))
+                exit()
+
+        vcdiff_args = ssplit('{} patches/vcdiff'.format(paths['mkdir']))
+        vcdiff_mkdir_proc = run(vcdiff_args, stdout=PIPE, stderr=STDOUT, text=True)
+        if vcdiff_mkdir_proc.stdout:
+            click.secho('ERR: ' + vcdiff_mkdir_proc.stdout.rstrip(), fg='bright_red')
             exit()
 
         for num in old_names:
-            cmd = '{} -q -e -s "{}" "{}" "patches/vcdiff/{:02d}.vcdiff"'.format(paths['xdelta3'], old_names[num], new_names[num], num)
-            args = ssplit(cmd)
-            run(args)
+            xdelta_cmd = '{} -q -e -s "{}" "{}" "patches/vcdiff/{:02d}.vcdiff"'.format(paths['xdelta3'], old_names[num], new_names[num], num)
+            run(ssplit(xdelta_cmd))
 
-        readme = """Windows:
-1. Extract the patches.7z (containing this file and a vcdiff folder) into your folder containing the original episode .mkv files.
-2. Double click the _Apply-Patch_windows.bat file and the patching will start automatically.
-3. When finished, the new file will appear in this folder and the original will be moved to a folder called 'old'.
-4. Delete the vcdiff folder along with this file and the Apply-Patch files.
-
-Linux:
+        readme = """Linux:
 1. Extract the patches.7z (containing this file and a vcdiff folder) into your folder containing the original episode .mkv files.
 2. Run _Apply-Patch_unix.sh.
 3. When finished, the new file will appear in this folder and the original will be moved to a folder called 'old'.
-4. You will be prompted to auto-delete the patch files."""
+4. You will be prompted to auto-delete the patch files.\n\n"""
+
+        if windows:
+            readme += """Windows:
+1. Extract the patches.7z (containing this file and a vcdiff folder) into your folder containing the original episode .mkv files.
+2. Double click the _Apply-Patch_windows.bat file and the patching will start automatically.
+3. When finished, the new file will appear in this folder and the original will be moved to a folder called 'old'.
+4. Delete the vcdiff folder along with this file and the Apply-Patch files."""
 
         linux_patch = '` #!/bin/sh`\n` mkdir old`'
 
@@ -282,7 +297,9 @@ Linux:
             linux_patch += '\n` mv "{}" old`'.format(old_names[num])
 
         linux_patch += '\n` rm -i -r vcdiff`'
-        linux_patch += '\n` rm -i "_README.txt" "_Apply-Patch_windows.bat"`\n'
+        linux_patch += '\n` rm -i "_README.txt" "_Apply-Patch_windows.bat"`'
+        if windows:
+            linux_patch += '\n` rm -i "xdelta3.exe"`\n'
 
         windows_patch = '@echo off\nmkdir old'
 
@@ -301,12 +318,19 @@ Linux:
         linux_file.write(linux_patch)
         linux_file.close()
 
-        windows_file = open('patches/_Apply-Patch_windows.bat', 'w')
-        windows_file.write(windows_patch)
-        windows_file.close()
+        linux_lib_args = ssplit('{} {} "patches/xdelta3"'.format(paths['cp'], paths['xdelta3']))
+        linux_xdelta3_lib = run(linux_lib_args, stdout=PIPE, stderr=STDOUT, text=True)
+        if linux_xdelta3_lib.stdout:
+            click.secho('ERR: ' + linux_xdelta3_lib.stdout.rstrip(), fg='bright_red')
+            exit()
 
-        cmd = '7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on patches.7z patches'
-        args = ssplit(cmd)
+        if windows:
+            windows_file = open('patches/_Apply-Patch_windows.bat', 'w')
+            windows_file.write(windows_patch)
+            windows_file.close()
+
+        xdelta_cmd = '7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on patches.7z patches'
+        args = ssplit(xdelta_cmd)
         archive_proc = run(args, stdout=PIPE, stderr=PIPE, text=True)
         if archive_proc.stderr:
             click.secho('ERR: ' + archive_proc.stderr.rstrip(), fg='bright_red')
@@ -315,9 +339,7 @@ Linux:
             if verbose:
                 print(archive_proc.stdout)
 
-        rm_cmd = '{} -i -r patches'.format(paths['rm'])
-        args = ssplit(rm_cmd)
-        run(args, text=True)
+        run(ssplit('{} -i -r patches'.format(paths['rm'])), text=True)
 
 
 if __name__ == '__main__':

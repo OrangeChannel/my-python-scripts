@@ -34,6 +34,8 @@ containing auto-apply scripts for Windows and Linux.
 
 Options:
     -D, --dryrun   Prints detected v2 files without creating patches.
+    -W, --windows  Creates patch script for Windows users (requires xdelta3.exe
+                   in folder). Disabled by default.
     -v, --verbose  Prints all operations' outputs.
 
 Usage:
