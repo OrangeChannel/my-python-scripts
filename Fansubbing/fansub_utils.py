@@ -13,7 +13,7 @@ Dependencies:
     7z :      https://www.archlinux.org/packages/extra/x86_64/p7zip/
 """
 __author__ = 'Dave <orangechannel@pm.me>'
-__date__ = '8 February 2020'
+__date__ = '9 February 2020'
 
 from re import search
 from shlex import split as ssplit
@@ -111,7 +111,7 @@ def renamer():
 @click.option('-G', '--group', prompt='Group name', metavar=r'"Group"')
 @click.option('-T', '--title', prompt='Show title', metavar=r'"Title')
 @click.option('-S', '--src', prompt='Source', type=click.Choice(['BD', 'DVD', 'TV', 'WEB'], case_sensitive=False))
-@click.option('-R', '--res', prompt='Resolution <int>', metavar='<int>')
+@click.option('-R', '--res', prompt='Resolution <int>', metavar='INT', type=click.IntRange(72, 2160))
 @click.option('-q', '--quiet', is_flag=True, help='Supress output.')
 @click.option('-v', '--verbose', is_flag=True, help='Prints new filenames.')
 def simple_renamer(group: str, title: str, src: str, res: str, quiet, verbose):
@@ -137,7 +137,7 @@ def simple_renamer(group: str, title: str, src: str, res: str, quiet, verbose):
 @click.option('-G', '--group', prompt='Group name', metavar=r'"Group"')
 @click.option('-T', '--title', prompt='Show title', metavar=r'"Title')
 @click.option('-S', '--src', prompt='Source', type=click.Choice(['BD', 'DVD', 'TV', 'WEB'], case_sensitive=False))
-@click.option('-R', '--res', prompt='Resolution <int>', metavar='<int>')
+@click.option('-R', '--res', prompt='Resolution <int>', metavar='INT', type=click.IntRange(72, 2160))
 def cleaner(dryrun, group: str, title: str, src: str, res: str):
     """Renames files based on unique 1-2 digit number found in original filename.
 
