@@ -29,11 +29,11 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 def cli():
-    """Fansubbing utility functions. Meant to be ran inside of a folder with .mkv files.
+    """Fansubbing utility functions. Batch processing functions meant to be ran inside of a folder with .mkv files.
 
 \b
 More information on GitHub:
-https://github.com/OrangeChannel/my-python-scripts/blob/master/Fansubbing/README.md
+https://github.com/OrangeChannel/my-python-scripts/blob/master/Fansubbing
     """
 
 
@@ -340,6 +340,103 @@ Run with `--dryrun` to see what episode patches will be created.
                 print(archive_proc.stdout)
 
         run(ssplit('{} -i -r patches'.format(paths['rm'])), text=True)
+
+
+@cli.command('bitrate')
+@click.option('-S', '--size', type=click.FLOAT, help='Filesize (number only).', prompt=True)
+@click.option('-U', '--unit', type=click.Choice(['TB', 'GB', 'MB', 'kB', 'TiB', 'GiB', 'MiB', 'KiB'], case_sensitive=False), prompt=True)
+@click.option('-T', '--time', type=click.FLOAT, help='Time (in seconds) of clip.', default=0)
+@click.option('-F', '--frames', type=click.INT, help='Number of frames in clip.', default=0)
+@click.option('-R', '--framerate', default=24000/1001, type=click.FLOAT, help='Framerate (in fps) of clip. (23.976 by default)')
+def bitrate_(size: float, unit: str, time: float, frames: int, framerate: float):
+    """Converts a desired filesize into average bitrate in kbps.
+
+If specifying --time, you do not need to specify --frames and vice versa. Units will be prompted for if not specified.
+
+\b
+Examples:
+    \b
+    For a 950 MiB file that is 24 minutes long:
+    $ python fansub_utils.py bitrate -S 950 -U mib -T 1440
+    > Bitrate should be 5,534 kbps.
+....
+    For a 2 GB file that is 34720 frames long:
+    $ python fansub_utils.py bitrate --size 2 -F 34720
+    > Unit (TB, GB, MB, kB, TiB, GiB, MiB, KiB): gb
+    > Bitrate should be 11,049 kbps."""
+    if not time and not frames:
+        click.secho('ERR: --time or --frames must be specified.', fg='bright_red')
+        exit()
+
+    decimal = {'k': 1000,
+               'm': 1000 ** 2,
+               'g': 1000 ** 3,
+               't': 1000 ** 4}
+
+    binary = {'k': 1024,
+              'm': 1024 ** 2,
+              'g': 1024 ** 3,
+              't': 1024 ** 4}
+
+    if frames:
+        time = (framerate ** -1) * frames
+
+    if 'i' in unit:
+        bytes_ = binary[unit.lower()[0]] * size
+    else:
+        bytes_ = decimal[unit.lower()[0]] * size
+
+    bits = bytes_ * 8
+
+    rate = round((bits / 1000) / time)
+    print('Bitrate should be {:,} kbps.'.format(rate))
+
+
+@cli.command()
+@click.option('-B', '--bitrate', type=click.INT, help='Average bitrate in kbps.', prompt=True)
+@click.option('-T', '--time', type=click.FLOAT, help='Time (in seconds) of clip.', default=0)
+@click.option('-F', '--frames', type=click.INT, help='Number of frames in clip.', default=0)
+@click.option('-R', '--framerate', default=24000/1001, type=click.FLOAT, help='Framerate (in fps) of clip. (23.976 by default)')
+def filesize(bitrate: int, time: float, frames: int, framerate: float):
+    """Estimates filesize based on average bitrate in kbps.
+
+\b
+Examples:
+    \b
+    At 7,774 kbps for 32,000 frames:
+    $ python fansub_utils.py filesize -B 7774 -F 32000
+    > Estimated filesize is 1.21 GiB or 1.30 GB.
+....
+    At 5,736 kbps for 24 minutes:
+    $ python fansub_utils.py filesize -B 5736 -T 1440
+    > Estimated filesize is 984.65 MiB or 1.03 GB."""
+    if not time and not frames:
+        click.secho('ERR: --time or --frames must be specified.', fg='bright_red')
+        exit()
+
+    if frames:
+        time = (framerate ** -1) * frames
+
+    bits = bitrate * 1000 * time
+    bytes_ = bits / 8
+
+    if (bsize := bytes_ / 1024 ** 4) >= 1: binary = 'Ti'
+    elif (bsize := bytes_ / 1024 ** 3) >= 1: binary = 'Gi'
+    elif (bsize := bytes_ / 1024 ** 2) >= 1: binary = 'Mi'
+    elif (bsize := bytes_ / 1024) >= 1: binary = 'Ki'
+    else:
+        click.secho('ERR: resulting filesize too small', fg='bright_red')
+        exit()
+
+    if (dsize := bytes_ / 1000 ** 4) >= 1: decimal = 'T'
+    elif (dsize := bytes_ / 1000 ** 3) >= 1: decimal = 'G'
+    elif (dsize := bytes_ / 1000 ** 2) >= 1: decimal = 'M'
+    elif (dsize := bytes_ / 1000) >= 1: decimal = 'k'
+    else:
+        click.secho('ERR: resulting filesize too small', fg='bright_red')
+        exit()
+
+    print('Estimated filesize is {:.2f} {}B or {:.2f} {}B.'.format(bsize, binary, dsize, decimal))
 
 
 if __name__ == '__main__':

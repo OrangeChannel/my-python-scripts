@@ -9,12 +9,16 @@ For further documentation and help, run any command with `--help`:
          $ python fansub_utils.py renamer cleaner --help
 
 
-Current functions:
+Current batch processing functions:
     checker  Verifies CRC32 hashes in filenames.
     diff     Creates xdelta3 patches for v2 files.
     hasher   Appends CRC32 hash to filenames.
     remover  Removes CRC32 hash from filenames.
     renamer  Batch renames files.
+
+Current utility functions:
+    bitrate   Converts a desired filesize into average bitrate in kbps.
+    filesize  Estimates filesize based on average bitrate in kbps.
 
 
 checker
@@ -92,11 +96,11 @@ Commands:
     If group, title, src, or res isn't specified it will be prompted for.
 
     Options:
-        -D, --dryrun               Prints new filenames without modifying them.
+        -D, --dryrun         Prints new filenames without modifying them.
         -G, --group "Group"
         -T, --title "Title
-        -S, --src [BD|DVD|TV|WEB]
-        -R, --res <int>
+        -S, --src
+        -R, --res INT
 
     Usage:
 
@@ -112,12 +116,71 @@ Commands:
 
     Options:
         -G, --group "Group"
-        -T, --title "Title
-        -S, --src [BD|DVD|TV|WEB]
-        -R, --res <int>
-        -q, --quiet                Supress output.
-        -v, --verbose              Prints new filenames.
+        -T, --title "Title"
+        -S, --src
+        -R, --res INT
+        -q, --quiet          Supress output.
+        -v, --verbose        Prints new filenames.
 
     Usage:
 
         $ python fansub_utils.py renamer simple [OPTIONS]
+
+
+
+Utility functions
+=================
+
+
+bitrate
+-------
+Converts a desired filesize into average bitrate in kbps.
+
+If specifying --time, you do not need to specify --frames and vice versa.
+Units will be prompted for if not specified.
+
+Examples:
+    For a 950 MiB file that is 24 minutes long:
+        $ python fansub_utils.py bitrate -S 950 -U mib -T 1440
+        > Bitrate should be 5,534 kbps.
+
+    For a 2 GB file that is 34720 frames long:
+        $ python fansub_utils.py bitrate --size 2 -F 34720
+        > Unit (TB, GB, MB, kB, TiB, GiB, MiB, KiB): gb
+        > Bitrate should be 11,049 kbps.
+
+Options:
+    -S, --size FLOAT       Filesize (number only).
+    -U, --unit
+    -T, --time FLOAT       Time (in seconds) of clip.
+    -F, --frames INTEGER   Number of frames in clip.
+    -R, --framerate FLOAT  Framerate (in fps) of clip. (23.976 by default)
+
+Usage:
+
+    $ python fansub_utils.py bitrate [OPTIONS]
+
+
+
+filesize
+--------
+Estimates filesize based on average bitrate in kbps.
+
+Examples:
+    At 7,774 kbps for 32,000 frames:
+        $ python fansub_utils.py filesize -B 7774 -F 32000
+        > Estimated filesize is 1.21 GiB or 1.30 GB.
+
+    At 5,736 kbps for 24 minutes:
+        $ python fansub_utils.py filesize -B 5736 -T 1440
+        > Estimated filesize is 984.65 MiB or 1.03 GB.
+
+Options:
+    -B, --bitrate INTEGER  Average bitrate in kbps.
+    -T, --time FLOAT       Time (in seconds) of clip.
+    -F, --frames INTEGER   Number of frames in clip.
+    -R, --framerate FLOAT  Framerate (in fps) of clip. (23.976 by default)
+
+Usage:
+
+    $ python fansub_utils.py filesize [OPTIONS]
