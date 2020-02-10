@@ -50,7 +50,7 @@ def _check_dependencies(depends: List[str]):
 @cli.command()
 @click.option('-q', '--quiet', is_flag=True, help='Supress output.')
 @click.option('-v', '--verbose', is_flag=True, help='Prints new filenames.')
-def hasher(quiet, verbose):
+def hasher(quiet: bool, verbose: bool):
     """Appends CRC32 hash to filenames."""
     paths = _check_dependencies(['fd', 'rhash'])
 
@@ -76,7 +76,7 @@ def hasher(quiet, verbose):
 @cli.command()
 @click.option('-q', '--quiet', is_flag=True, help='Supress output.')
 @click.option('-v', '--verbose', is_flag=True, help='Prints new filenames.')
-def remover(quiet, verbose):
+def remover(quiet: bool, verbose: bool):
     """Removes CRC32 hash from filenames. Removes whitespace if needed."""
     paths = _check_dependencies(['fd', 'rnr'])
 
@@ -114,7 +114,7 @@ def renamer():
 @click.option('-R', '--res', prompt='Resolution <int>', metavar='INT', type=click.IntRange(72, 2160))
 @click.option('-q', '--quiet', is_flag=True, help='Supress output.')
 @click.option('-v', '--verbose', is_flag=True, help='Prints new filenames.')
-def simple_renamer(group: str, title: str, src: str, res: str, quiet, verbose):
+def simple_renamer(group: str, title: str, src: str, res: int, quiet: bool, verbose: bool):
     """Renames from `ep##.mkv` to `[Group] Title - ## (SRC RESp).mkv`."""
     paths = _check_dependencies(['fd', 'rnr'])
 
@@ -138,7 +138,7 @@ def simple_renamer(group: str, title: str, src: str, res: str, quiet, verbose):
 @click.option('-T', '--title', prompt='Show title', metavar=r'"Title')
 @click.option('-S', '--src', prompt='Source', type=click.Choice(['BD', 'DVD', 'TV', 'WEB'], case_sensitive=False))
 @click.option('-R', '--res', prompt='Resolution <int>', metavar='INT', type=click.IntRange(72, 2160))
-def cleaner(dryrun, group: str, title: str, src: str, res: str):
+def cleaner(dryrun: bool, group: str, title: str, src: str, res: int):
     """Renames files based on unique 1-2 digit number found in original filename.
 
 Will find episode number from a '_#'/' #' or '_##'/' ##' sub-string in filename.
@@ -192,7 +192,7 @@ Files that are NOT unique:
 @click.option('-D', '--dryrun', is_flag=True, help='Prints detected v2 files without creating patches.')
 @click.option('-W', '--windows', is_flag=True, default=False, help='Creates patch script for Windows users (requires xdelta3.exe in folder).')
 @click.option('-v', '--verbose', is_flag=True, help='Prints all operations\' outputs.')
-def diff(dryrun, windows, verbose):
+def diff(dryrun: bool, windows: bool, verbose: bool):
     """Creates xdelta3 patches for v2 files.
 
 Packs patches, a README, and Windows / Linux auto-patch scripts into a .7z archive called "patches.7z".
