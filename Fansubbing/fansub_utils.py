@@ -54,9 +54,7 @@ def hasher(quiet: bool, verbose: bool):
     """Appends CRC32 hash to filenames."""
     paths = _check_dependencies(['fd', 'rhash'])
 
-    cmd = '{} -e mkv -X {} --embed-crc'.format(paths['fd'], paths['rhash'])
-    args = ssplit(cmd)
-
+    args = [paths['fd'], '-e', 'mkv', '-X', paths['rhash'], '--embed-crc']
     proc = run(args, stderr=PIPE, stdout=PIPE, text=True)
     if err := proc.stderr:
         for i in err.splitlines(): print(i)
@@ -80,8 +78,7 @@ def remover(quiet: bool, verbose: bool):
     """Removes CRC32 hash from filenames. Removes whitespace if needed."""
     paths = _check_dependencies(['fd', 'rnr'])
 
-    cmd = '{} -e mkv -X {} -f --no-dump '.format(paths['fd'], paths['rnr']) + r'"(?P<hash>\s?\[\S{8}\].)" ' + r'"."'
-    args = ssplit(cmd)
+    args = [paths['fd'], '-e', 'mkv', '-X', paths['rnr'], '-f', '--no-dump', r'\s*\[\S{8}\]\s*\.', '.']
     proc = run(args, stdout=PIPE, text=True)
 
     filenum = len(proc.stdout.splitlines())
@@ -97,8 +94,8 @@ def remover(quiet: bool, verbose: bool):
 def checker():
     """Verifies CRC32 hashes in filenames."""
     paths = _check_dependencies(['fd', 'rhash'])
-    cmd = '{} -e mkv -X {} -k'.format(paths['fd'], paths['rhash'])
-    args = ssplit(cmd)
+
+    args = [paths['fd'], '-e', 'mkv', '-X', paths['rhash'], '-k']
     run(args, text=True)
 
 
@@ -118,8 +115,7 @@ def simple_renamer(group: str, title: str, src: str, res: int, quiet: bool, verb
     """Renames from `ep##.mkv` to `[Group] Title - ## (SRC RESp).mkv`."""
     paths = _check_dependencies(['fd', 'rnr'])
 
-    cmd = '{} -e mkv -X {} -f --no-dump '.format(paths['fd'], paths['rnr']) + r'"(ep)(?P<num>\d+)" ' + '"[{}] {} - '.format(group, title) + r'$num ' + '({} {}p)"'.format(src.upper(), res)
-    args = ssplit(cmd)
+    args = [paths['fd'], '-e', 'mkv', '-X', paths['rnr'], '-f', '--no-dump', r'ep(?P<num>\d+)', f'[{group}] {title} - $num ({src.upper()} {res}p)']
     proc = run(args, stdout=PIPE, text=True)
 
     filenum = len(proc.stdout.splitlines())
@@ -164,17 +160,16 @@ Files that are NOT unique:
 """
     paths = _check_dependencies(['fd', 'mv'])
 
-    cmd = '{} -e mkv'.format(paths['fd'])
-    args = ssplit(cmd)
+    args = [paths['fd'], '-e', 'mkv']
     orig_names = run(args, stdout=PIPE, text=True).stdout.splitlines()
     orig_names = [i.rstrip() for i in orig_names]
     new_names = []
 
     for k, name in enumerate(orig_names):
-        m = search(r'(\s|_)(?P<num>\d{1,2})\D', name)
+        m = search(r'[\s_](?P<num>\d{1,2})\D', name)
         if m:
             if dryrun:
-                print('"{}"'.format(name))
+                print(f'"{name}"')
 
                 new_name = '\t--> "[{}] {} - {:02d} ({} {}p).mkv"'.format(group, title, int(m.group('num')), src.upper(), res)
                 if new_name in new_names:
@@ -183,8 +178,7 @@ Files that are NOT unique:
                     print(new_name)
                     new_names.append(new_name)
             else:
-                cmd = '{} "{}" "[{}] {} - {:02d} ({} {}p).mkv"'.format(paths['mv'], name, group, title, int(m.group('num')), src.upper(), res)
-                args = ssplit(cmd)
+                args = [paths['mv'], name, '[{}] {} - {:02d} ({} {}p).mkv'.format(group, title, int(m.group('num')), src.upper(), res)]
                 run(args)
 
 
@@ -220,7 +214,7 @@ Run with `--dryrun` to see what episode patches will be created.
 """
     paths = _check_dependencies(['fd', 'xdelta3', '7z', 'mkdir', 'rm', 'mv', 'cp'])
 
-    args = ssplit('{} -e mkv'.format(paths['fd']))
+    args = [paths['fd'], '-e', 'mkv']
     orig_names = run(args, stdout=PIPE, text=True).stdout.splitlines()
     orig_names = [i.rstrip() for i in orig_names]
 
