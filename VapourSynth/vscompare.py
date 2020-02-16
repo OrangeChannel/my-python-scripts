@@ -1,6 +1,6 @@
 """Creates easy frame comparisons between multiple VapourSynth clips."""
 __author__ = 'Dave <orangechannel@pm.me>'
-__date__ = '6 February 2020'
+__date__ = '16 February 2020'
 
 import os
 from contextlib import contextmanager
@@ -101,7 +101,7 @@ def prep(*clips: vs.VideoNode, w: int = 1280, h: int = 720, dith: bool = True, y
 
 def save(*frames: int, rand: int = 0, folder: bool = False, zoom: int = 1, **clips: vs.VideoNode):
     """
-    Writes frames as named PNG files for easy upload to slowpics.org.
+    Writes frames as named RGB24 PNG files for easy upload to slowpics.org.
 
     Running "save(17, 24, rand=2, folder=True, zoom=3, BD=bd, TV=tv)"
     will save four 3x-point-upscaled frames (17, 24, and 2 randoms) in folders named 'BD' and 'TV'.
@@ -136,15 +136,17 @@ def save(*frames: int, rand: int = 0, folder: bool = False, zoom: int = 1, **cli
             with _cd(str(name)):
                 for f in frames:
                     out = core.imwri.Write(clip[f].resize.Point(width=(zoom * clip.width), height=(zoom * clip.height),
-                                                                format=vs.RGB24, matrix_in_s='709', range=0, range_in=0),
-                                           'PNG', '%05d.png', firstnum=f)
+                                                                format=vs.RGB24, matrix_in_s='709', range=0, range_in=0,
+                                                                dither_type='error_diffusion'),
+                                           'PNG', '%06d.png', firstnum=f)
                     out.get_frame(0)
     else:
         for name, clip in clips.items():
             for f in frames:
                 out = core.imwri.Write(clip[f].resize.Point(width=(zoom * clip.width), height=(zoom * clip.height),
-                                                            format=vs.RGB24, matrix_in_s='709', range=0, range_in=0),
-                                       'PNG', f"{name}%05d.png", firstnum=f)
+                                                            format=vs.RGB24, matrix_in_s='709', range=0, range_in=0,
+                                                            dither_type='error_diffusion'),
+                                       'PNG', f"{name}%06d.png", firstnum=f)
                 out.get_frame(0)
 
 
