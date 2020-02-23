@@ -16,7 +16,6 @@ __author__ = 'Dave <orangechannel@pm.me>'
 __date__ = '22 February 2020'
 
 from re import search
-from shlex import split as ssplit
 from shutil import which
 from subprocess import PIPE, run, STDOUT
 from sys import exit
@@ -95,8 +94,7 @@ def checker():
     """Verifies CRC32 hashes in filenames."""
     paths = _check_dependencies(['fd', 'rhash'])
 
-    args = [paths['fd'], '-e', 'mkv', '-X', paths['rhash'], '-k']
-    run(args, text=True)
+    run([paths['fd'], '-e', 'mkv', '-X', paths['rhash'], '-k'], text=True)
 
 
 @cli.group()
@@ -160,8 +158,7 @@ Files that are NOT unique:
 """
     paths = _check_dependencies(['fd', 'mv'])
 
-    args = [paths['fd'], '-e', 'mkv']
-    orig_names = run(args, stdout=PIPE, text=True).stdout.splitlines()
+    orig_names = run([paths['fd'], '-e', 'mkv'], stdout=PIPE, text=True).stdout.splitlines()
     orig_names = [i.rstrip() for i in orig_names]
     new_names = []
 
@@ -214,8 +211,7 @@ Run with `--dryrun` to see what episode patches will be created.
 """
     paths = _check_dependencies(['fd', 'xdelta3', '7z', 'mkdir', 'rm', 'mv', 'cp'])
 
-    args = [paths['fd'], '-e', 'mkv']
-    orig_names = run(args, stdout=PIPE, text=True).stdout.splitlines()
+    orig_names = run([paths['fd'], '-e', 'mkv'], stdout=PIPE, text=True).stdout.splitlines()
     orig_names = [i.rstrip() for i in orig_names]
 
     episodes, old_names, new_names = {}, {}, {}
@@ -246,30 +242,26 @@ Run with `--dryrun` to see what episode patches will be created.
             click.secho('\t--> {}'.format(new_names[num]), fg='bright_blue')
 
     if not dryrun:
-        patch_args = ssplit('{} patches'.format(paths['mkdir']))
-        patch_mkdir_proc = run(patch_args, stdout=PIPE, stderr=STDOUT, text=True)
+        patch_mkdir_proc = run([paths['mkdir'], 'patches'], stdout=PIPE, stderr=STDOUT, text=True)
         if patch_mkdir_proc.stdout:
             click.secho('ERR: ' + patch_mkdir_proc.stdout.rstrip(), fg='bright_red')
             exit()
 
         if windows:
-            mv_xdelta_args = ssplit('{} xdelta3.exe patches'.format(paths['mv']))
-            mvx = run(mv_xdelta_args, stdout=PIPE, stderr=STDOUT, text=True)
+            mvx = run([paths['mv'], 'xdelta3.exe', 'patches'], stdout=PIPE, stderr=STDOUT, text=True)
             if mvx.stdout:
                 click.secho('ERR: ' + mvx.stdout.rstrip(), fg='bright_red')
                 click.secho('Running with --windows requires an xdelta3.exe file in the folder.', fg='bright_red')
-                run(ssplit('{} -r patches'.format(paths['rm'])))
+                run([paths['rm'], '-r', 'patches'])
                 exit()
 
-        vcdiff_args = ssplit('{} patches/vcdiff'.format(paths['mkdir']))
-        vcdiff_mkdir_proc = run(vcdiff_args, stdout=PIPE, stderr=STDOUT, text=True)
+        vcdiff_mkdir_proc = run([paths['mkdir'], 'patches/vcdiff'], stdout=PIPE, stderr=STDOUT, text=True)
         if vcdiff_mkdir_proc.stdout:
             click.secho('ERR: ' + vcdiff_mkdir_proc.stdout.rstrip(), fg='bright_red')
             exit()
 
         for num in old_names:
-            xdelta_cmd = '{} -q -e -s "{}" "{}" "patches/vcdiff/{:02d}.vcdiff"'.format(paths['xdelta3'], old_names[num], new_names[num], num)
-            run(ssplit(xdelta_cmd))
+            run([paths['xdelta3'], '-q', '-e', '-s', old_names[num], new_names[num], f'patches/vcdiff/{num:02d}.vcdiff'])
 
         readme = """Linux:
 1. Extract the patches.7z (containing this file and a vcdiff folder) into your folder containing the original episode .mkv files.
@@ -312,8 +304,7 @@ Run with `--dryrun` to see what episode patches will be created.
         linux_file.write(linux_patch)
         linux_file.close()
 
-        linux_lib_args = ssplit('{} {} "patches/xdelta3"'.format(paths['cp'], paths['xdelta3']))
-        linux_xdelta3_lib = run(linux_lib_args, stdout=PIPE, stderr=STDOUT, text=True)
+        linux_xdelta3_lib = run([paths['cp'], paths['xdelta3'], 'patches/xdelta3'], stdout=PIPE, stderr=STDOUT, text=True)
         if linux_xdelta3_lib.stdout:
             click.secho('ERR: ' + linux_xdelta3_lib.stdout.rstrip(), fg='bright_red')
             exit()
@@ -323,8 +314,7 @@ Run with `--dryrun` to see what episode patches will be created.
             windows_file.write(windows_patch)
             windows_file.close()
 
-        xdelta_cmd = '7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on patches.7z patches'
-        args = ssplit(xdelta_cmd)
+        args = [paths['7z'], 'a', '-t7z', '-m0=lzma', '-mx=9', '-mfb=6', '-md=32m', '-ms=on', 'patches.7z', 'patches']
         archive_proc = run(args, stdout=PIPE, stderr=PIPE, text=True)
         if archive_proc.stderr:
             click.secho('ERR: ' + archive_proc.stderr.rstrip(), fg='bright_red')
@@ -333,7 +323,7 @@ Run with `--dryrun` to see what episode patches will be created.
             if verbose:
                 print(archive_proc.stdout)
 
-        run(ssplit('{} -i -r patches'.format(paths['rm'])), text=True)
+        run([paths['rm'], '-i', '-r', 'patches'], text=True)
 
 
 @cli.command('bitrate')
