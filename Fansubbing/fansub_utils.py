@@ -13,7 +13,7 @@ Dependencies:
     7z :      https://www.archlinux.org/packages/extra/x86_64/p7zip/
 """
 __author__ = 'Dave <orangechannel@pm.me>'
-__date__ = '9 February 2020'
+__date__ = '22 February 2020'
 
 from re import search
 from shlex import split as ssplit
@@ -287,7 +287,7 @@ Run with `--dryrun` to see what episode patches will be created.
         linux_patch = '` #!/bin/sh`\n` mkdir old`'
 
         for num in old_names:
-            linux_patch += '\n` xdelta3 -v -d -s "{}" "vcdiff/{:02}.vcdiff" "{}"`'.format(old_names[num], num, new_names[num])
+            linux_patch += '\n` xdelta3 -v -d -s "{}" "vcdiff/{:02d}.vcdiff" "{}"`'.format(old_names[num], num, new_names[num])
             linux_patch += '\n` mv "{}" old`'.format(old_names[num])
 
         linux_patch += '\n` rm -i -r vcdiff`'
@@ -298,7 +298,7 @@ Run with `--dryrun` to see what episode patches will be created.
         windows_patch = '@echo off\nmkdir old'
 
         for num in old_names:
-            windows_patch += '\n.\\xdelta3.exe -v -d -s "{}" "vcdiff/{:02}.vcdiff" "{}"`'.format(old_names[num], num, new_names[num])
+            windows_patch += '\n.\\xdelta3.exe -v -d -s "{}" "vcdiff/{:02d}.vcdiff" "{}"`'.format(old_names[num], num, new_names[num])
             windows_patch += '\nmove "{}" old'.format(old_names[num])
 
         windows_patch += '\necho Patching complete.'
