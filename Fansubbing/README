@@ -98,7 +98,7 @@ Commands:
     Options:
         -D, --dryrun         Prints new filenames without modifying them.
         -G, --group "Group"
-        -T, --title "Title
+        -T, --title "Title"
         -S, --src
         -R, --res INT
 

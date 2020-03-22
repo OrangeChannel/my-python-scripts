@@ -104,7 +104,7 @@ def renamer():
 
 @renamer.command('simple')
 @click.option('-G', '--group', prompt='Group name', metavar=r'"Group"')
-@click.option('-T', '--title', prompt='Show title', metavar=r'"Title')
+@click.option('-T', '--title', prompt='Show title', metavar=r'"Title"')
 @click.option('-S', '--src', prompt='Source', type=click.Choice(['BD', 'DVD', 'TV', 'WEB'], case_sensitive=False))
 @click.option('-R', '--res', prompt='Resolution <int>', metavar='INT', type=click.IntRange(72, 2160))
 @click.option('-q', '--quiet', is_flag=True, help='Supress output.')
@@ -129,7 +129,7 @@ def simple_renamer(group: str, title: str, src: str, res: int, quiet: bool, verb
 @renamer.command()
 @click.option('-D', '--dryrun', is_flag=True, help='Prints new filenames without modifying them.')
 @click.option('-G', '--group', prompt='Group name', metavar=r'"Group"')
-@click.option('-T', '--title', prompt='Show title', metavar=r'"Title')
+@click.option('-T', '--title', prompt='Show title', metavar=r'"Title"')
 @click.option('-S', '--src', prompt='Source', type=click.Choice(['BD', 'DVD', 'TV', 'WEB'], case_sensitive=False))
 @click.option('-R', '--res', prompt='Resolution <int>', metavar='INT', type=click.IntRange(72, 2160))
 def cleaner(dryrun: bool, group: str, title: str, src: str, res: int):
