@@ -13,7 +13,7 @@ Dependencies:
     7z :      https://www.archlinux.org/packages/extra/x86_64/p7zip/
 """
 __author__ = 'Dave <orangechannel@pm.me>'
-__date__ = '22 February 2020'
+__date__ = '9 April 2020'
 
 from re import search
 from shutil import which
@@ -41,7 +41,7 @@ def _check_dependencies(depends: List[str]):
 
     for i in depends:
         if path := which(i): paths[i] = path
-        else: raise OSError('{} not found in PATH'.format(i))
+        else: raise OSError(f'{i} not found in PATH')
 
     return paths
 
@@ -64,10 +64,10 @@ def hasher(quiet: bool, verbose: bool):
 
     if not quiet:
         if verbose:
-            print('{} files have been renamed:\n'.format(filenum))
+            print(f'{filenum} files have been renamed:\n')
             for line in lines:
                 if line[0] != r';': print(line[:-9])
-        else: print('{} files have been renamed.'.format(filenum))
+        else: print(f'{filenum} files have been renamed.')
 
 
 @cli.command()
@@ -84,9 +84,9 @@ def remover(quiet: bool, verbose: bool):
 
     if not quiet:
         if verbose:
-            print('{} files have been renamed:\n'.format(filenum))
+            print(f'{filenum} files have been renamed:\n')
             print(proc.stdout)
-        else: print('{} files have been renamed.'.format(filenum))
+        else: print(f'{filenum} files have been renamed.')
 
 
 @cli.command()
@@ -120,10 +120,10 @@ def simple_renamer(group: str, title: str, src: str, res: int, quiet: bool, verb
 
     if not quiet:
         if verbose:
-            print('{} files have been renamed:\n'.format(filenum))
+            print(f'{filenum} files have been renamed:\n')
             print(proc.stdout)
         else:
-            print('{} files have been renamed.'.format(filenum))
+            print(f'{filenum} files have been renamed.')
 
 
 @renamer.command()
@@ -168,7 +168,7 @@ Files that are NOT unique:
             if dryrun:
                 print(f'"{name}"')
 
-                new_name = '\t--> "[{}] {} - {:02d} ({} {}p).mkv"'.format(group, title, int(m.group('num')), src.upper(), res)
+                new_name = f'\t--> "[{group}] {title} - {int(m.group("num")):02d} ({src.upper()} {res}p).mkv"'
                 if new_name in new_names:
                     click.secho(new_name + '\tERR', fg='bright_red', bold=True, blink=True)
                 else:
@@ -223,11 +223,11 @@ Run with `--dryrun` to see what episode patches will be created.
 
             if verbose:
                 if m.group('version'):
-                    print('Episode {} version {} detected.'.format(m.group('epnum'), m.group('version')))
+                    print(f'Episode {m.group("epnum")} version {m.group("version")} detected.')
 
     for num in episodes:
         if len(episodes[num]) > 2:
-            raise ValueError('Episode {} has more than 2 versions!'.format(num))
+            raise ValueError(f'Episode {num} has more than 2 versions!')
         if len(episodes[num]) < 2:
             episodes[num] = None
 
@@ -238,8 +238,8 @@ Run with `--dryrun` to see what episode patches will be created.
 
     if verbose or dryrun:
         for num in old_names:
-            click.secho('{}'.format(old_names[num]), fg='green')
-            click.secho('\t--> {}'.format(new_names[num]), fg='bright_blue')
+            click.secho(old_names[num], fg='green')
+            click.secho(f'\t--> {new_names[num]}', fg='bright_blue')
 
     if not dryrun:
         patch_mkdir_proc = run([paths['mkdir'], 'patches'], stdout=PIPE, stderr=STDOUT, text=True)
@@ -279,8 +279,8 @@ Run with `--dryrun` to see what episode patches will be created.
         linux_patch = '` #!/bin/sh`\n` mkdir old`'
 
         for num in old_names:
-            linux_patch += '\n` xdelta3 -v -d -s "{}" "vcdiff/{:02d}.vcdiff" "{}"`'.format(old_names[num], num, new_names[num])
-            linux_patch += '\n` mv "{}" old`'.format(old_names[num])
+            linux_patch += f'\n` xdelta3 -v -d -s "{old_names[num]}" "vcdiff/{num:02d}.vcdiff" "{new_names[num]}"`'
+            linux_patch += f'\n` mv "{old_names[num]}" old`'
 
         linux_patch += '\n` rm -i -r vcdiff`'
         linux_patch += '\n` rm -i "_README.txt" "_Apply-Patch_windows.bat"`'
@@ -290,8 +290,8 @@ Run with `--dryrun` to see what episode patches will be created.
         windows_patch = '@echo off\nmkdir old'
 
         for num in old_names:
-            windows_patch += '\n.\\xdelta3.exe -v -d -s "{}" "vcdiff/{:02d}.vcdiff" "{}"`'.format(old_names[num], num, new_names[num])
-            windows_patch += '\nmove "{}" old'.format(old_names[num])
+            windows_patch += f'\n.\\xdelta3.exe -v -d -s "{old_names[num]}" "vcdiff/{num:02d}.vcdiff" "{new_names[num]}"`'
+            windows_patch += f'\nmove "{old_names[num]}" old'
 
         windows_patch += '\necho Patching complete.'
         windows_patch += '\n@pause\n'
@@ -373,7 +373,7 @@ Examples:
     bits = bytes_ * 8
 
     rate = round((bits / 1000) / time)
-    print('Bitrate should be {:,} kbps.'.format(rate))
+    print(f'Bitrate should be {rate:,} kbps.')
 
 
 @cli.command()
@@ -420,7 +420,7 @@ Examples:
         click.secho('ERR: resulting filesize too small', fg='bright_red')
         exit()
 
-    print('Estimated filesize is {:.2f} {}B or {:.2f} {}B.'.format(bsize, binary, dsize, decimal))
+    print(f'Estimated filesize is {bsize:.2f} {binary}B or {dsize:.2f} {decimal}B.')
 
 
 if __name__ == '__main__':
