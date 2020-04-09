@@ -1,11 +1,6 @@
 #!/usr/bin/python
 """
 Dependencies:
-    which
-    cp
-    mkdir
-    mv
-    rm
     fd :      https://www.archlinux.org/packages/community/x86_64/fd/ OR `cargo install fd-find`
     rhash :   https://www.archlinux.org/packages/extra/x86_64/rhash/
     rnr :     https://aur.archlinux.org/packages/rnr/ OR `cargo install rnr`
@@ -15,9 +10,10 @@ Dependencies:
 __author__ = 'Dave <orangechannel@pm.me>'
 __date__ = '9 April 2020'
 
+from os import mkdir, rename, rmdir
 from re import search
-from shutil import which
-from subprocess import PIPE, run, STDOUT
+from shutil import copy, move, which
+from subprocess import PIPE, run
 from sys import exit
 from typing import List
 
@@ -156,7 +152,7 @@ Files that are NOT unique:
     `[Trash] Re:Zero 2_5.mkv` --> 02
     `[Garbage *$ s1 ReZERO 02.mkv` --> 02
 """
-    paths = _check_dependencies(['fd', 'mv'])
+    paths = _check_dependencies(['fd'])
 
     orig_names = run([paths['fd'], '-e', 'mkv'], stdout=PIPE, text=True).stdout.splitlines()
     orig_names = [i.rstrip() for i in orig_names]
@@ -175,8 +171,9 @@ Files that are NOT unique:
                     print(new_name)
                     new_names.append(new_name)
             else:
-                args = [paths['mv'], name, '[{}] {} - {:02d} ({} {}p).mkv'.format(group, title, int(m.group('num')), src.upper(), res)]
-                run(args)
+                try: rename(name, f'[{group}] {title} - {int(m.group("num")):02d} ({src.upper()} {res}p).mkv')
+                except Exception as err:
+                    click.secho(f'ERR: {err}', fg='bright_red')
 
 
 @cli.command()
@@ -209,7 +206,7 @@ i.e.
 
 Run with `--dryrun` to see what episode patches will be created.
 """
-    paths = _check_dependencies(['fd', 'xdelta3', '7z', 'mkdir', 'rm', 'mv', 'cp'])
+    paths = _check_dependencies(['fd', 'xdelta3', '7z'])
 
     orig_names = run([paths['fd'], '-e', 'mkv'], stdout=PIPE, text=True).stdout.splitlines()
     orig_names = [i.rstrip() for i in orig_names]
@@ -242,22 +239,27 @@ Run with `--dryrun` to see what episode patches will be created.
             click.secho(f'\t--> {new_names[num]}', fg='bright_blue')
 
     if not dryrun:
-        patch_mkdir_proc = run([paths['mkdir'], 'patches'], stdout=PIPE, stderr=STDOUT, text=True)
-        if patch_mkdir_proc.stdout:
-            click.secho('ERR: ' + patch_mkdir_proc.stdout.rstrip(), fg='bright_red')
+        try: mkdir('patches')
+        except Exception as err:
+            click.secho(f'ERR: {err}', fg='bright_red')
             exit()
 
         if windows:
-            mvx = run([paths['mv'], 'xdelta3.exe', 'patches'], stdout=PIPE, stderr=STDOUT, text=True)
-            if mvx.stdout:
-                click.secho('ERR: ' + mvx.stdout.rstrip(), fg='bright_red')
+            try: move('xdelta3.exe', 'patches')
+            except Exception as err:
+                click.secho(f'ERR: {err}', fg='bright_red')
                 click.secho('Running with --windows requires an xdelta3.exe file in the folder.', fg='bright_red')
-                run([paths['rm'], '-r', 'patches'])
+
+                try: rmdir('patches')
+                except Exception as err:
+                    click.secho(f'ERR: {err}', fg='bright_red')
+                    exit()
+
                 exit()
 
-        vcdiff_mkdir_proc = run([paths['mkdir'], 'patches/vcdiff'], stdout=PIPE, stderr=STDOUT, text=True)
-        if vcdiff_mkdir_proc.stdout:
-            click.secho('ERR: ' + vcdiff_mkdir_proc.stdout.rstrip(), fg='bright_red')
+        try: mkdir('patches/vcdiff')
+        except Exception as err:
+            click.secho(f'ERR: {err}', fg='bright_red')
             exit()
 
         for num in old_names:
@@ -304,10 +306,9 @@ Run with `--dryrun` to see what episode patches will be created.
         linux_file.write(linux_patch)
         linux_file.close()
 
-        linux_xdelta3_lib = run([paths['cp'], paths['xdelta3'], 'patches/xdelta3'], stdout=PIPE, stderr=STDOUT, text=True)
-        if linux_xdelta3_lib.stdout:
-            click.secho('ERR: ' + linux_xdelta3_lib.stdout.rstrip(), fg='bright_red')
-            exit()
+        try: copy(paths['xdelta3'], 'patches')
+        except Exception as err:
+            click.secho(f'ERR: {err}', fg='bright_red')
 
         if windows:
             windows_file = open('patches/_Apply-Patch_windows.bat', 'w')
@@ -323,7 +324,10 @@ Run with `--dryrun` to see what episode patches will be created.
             if verbose:
                 print(archive_proc.stdout)
 
-        run([paths['rm'], '-i', '-r', 'patches'], text=True)
+        try:
+            rmdir('patches')
+        except Exception as err:
+            click.secho(f'ERR: {err}', fg='bright_red')
 
 
 @cli.command('bitrate')
