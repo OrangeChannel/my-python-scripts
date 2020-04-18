@@ -54,11 +54,10 @@ def hasher(quiet: bool, verbose: bool):
     if err := proc.stderr:
         for i in err.splitlines(): print(i)
 
-    filenum = 0
-    for i in (lines := proc.stdout.splitlines()):
-        if i[0] != r';': filenum += 1
-
     if not quiet:
+        filenum = 0
+        for i in (lines := proc.stdout.splitlines()):
+            if i[0] != r';': filenum += 1
         if verbose:
             print(f'{filenum} files have been renamed:\n')
             for line in lines:
@@ -76,9 +75,8 @@ def remover(quiet: bool, verbose: bool):
     args = [paths['fd'], '-e', 'mkv', '-X', paths['rnr'], '-f', '--no-dump', r'\s*\[\S{8}\]\s*\.', '.']
     proc = run(args, stdout=PIPE, text=True)
 
-    filenum = len(proc.stdout.splitlines())
-
     if not quiet:
+        filenum = len(proc.stdout.splitlines())
         if verbose:
             print(f'{filenum} files have been renamed:\n')
             print(proc.stdout)
@@ -112,9 +110,8 @@ def simple_renamer(group: str, title: str, src: str, res: int, quiet: bool, verb
     args = [paths['fd'], '-e', 'mkv', '-X', paths['rnr'], '-f', '--no-dump', r'ep(?P<num>\d+)', f'[{group}] {title} - $num ({src.upper()} {res}p)']
     proc = run(args, stdout=PIPE, text=True)
 
-    filenum = len(proc.stdout.splitlines())
-
     if not quiet:
+        filenum = len(proc.stdout.splitlines())
         if verbose:
             print(f'{filenum} files have been renamed:\n')
             print(proc.stdout)
