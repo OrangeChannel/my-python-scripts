@@ -358,10 +358,10 @@ Examples:
                'g': 1000 ** 3,
                't': 1000 ** 4}
 
-    binary = {'k': 1024,
-              'm': 1024 ** 2,
-              'g': 1024 ** 3,
-              't': 1024 ** 4}
+    binary = {'k': 1 << 10,
+              'm': 1 << 20,
+              'g': 1 << 30,
+              't': 1 << 40}
 
     if frames:
         time = (framerate ** -1) * frames
@@ -405,10 +405,10 @@ Examples:
     bits = bitrate * 1000 * time
     bytes_ = bits / 8
 
-    if (bsize := bytes_ / 1024 ** 4) >= 1: binary = 'Ti'
-    elif (bsize := bytes_ / 1024 ** 3) >= 1: binary = 'Gi'
-    elif (bsize := bytes_ / 1024 ** 2) >= 1: binary = 'Mi'
-    elif (bsize := bytes_ / 1024) >= 1: binary = 'Ki'
+    if (bsize := bytes_ / (1 << 40)) >= 1: binary = 'Ti'
+    elif (bsize := bytes_ / (1 << 30)) >= 1: binary = 'Gi'
+    elif (bsize := bytes_ / (1 << 20)) >= 1: binary = 'Mi'
+    elif (bsize := bytes_ / (1 << 10)) >= 1: binary = 'Ki'
     else:
         click.secho('ERR: resulting filesize too small', fg='bright_red')
         exit()
