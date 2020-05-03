@@ -12,6 +12,7 @@ Dependencies:
 __author__ = 'Dave <orangechannel@pm.me>'
 __date__ = '3 May 2020'
 
+import xml.etree.ElementTree as ET
 from os import mkdir, rename, rmdir
 from re import search
 from shutil import copy, move, which
@@ -424,6 +425,38 @@ Examples:
         exit()
 
     print(f'Estimated filesize is {bsize:.2f} {binary}B or {dsize:.2f} {decimal}B.')
+
+
+@cli.command()
+@click.option('-F', '--file', type=click.STRING, help='Output filename with xml extension.', prompt=True)
+@click.option('-L', '--language', type=click.STRING, help='Language tag for edition names (see ISO-639-2). (eng by default)', default='eng')
+def edition_namer(file: str, language: str):
+    """Outputs an xml file to name editions in a Mastroka Video file.
+
+Requires the EditionUIDs from a chapter file.
+
+In order to properly mux this file into your .mkv file, add this file under 'Global tags' under Output > General in the MKVToolNix GUI or with `--global-tags file-name` via the command line.
+    """
+    editionuids, names = [], []
+    while temp := input(f'Enter edition UID #{len(editionuids) + 1} (press enter if done): '):
+        editionuids.append(temp)
+        names.append(input(f'Enter the edition name for edition {editionuids[-1]}: '))
+
+    tags = ET.Element('Tags')
+    for uid, name in zip(editionuids, names):
+        tag = ET.SubElement(tags, 'Tag')
+        target = ET.SubElement(tag, 'Targets')
+        ET.SubElement(target, 'EditionUID').text = uid
+        simple = ET.SubElement(tag, 'Simple')
+        ET.SubElement(simple, 'Name').text = 'TITLE'
+        ET.SubElement(simple, 'TagLanguage').text = language
+        ET.SubElement(simple, 'DefaultLanguage').text = '1'
+        ET.SubElement(simple, 'String').text = name
+
+    file = open(file, 'xt')
+    file.write('<?xml version="1.0"?>\n<!-- <!DOCTYPE Chapters SYSTEM "matroskatags.dtd"> -->\n')
+    file.write(ET.tostring(tags, encoding='unicode'))
+    file.close()
 
 
 if __name__ == '__main__':

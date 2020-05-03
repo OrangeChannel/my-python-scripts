@@ -17,8 +17,9 @@ Current batch processing functions:
     renamer  Batch renames files.
 
 Current utility functions:
-    bitrate   Converts a desired filesize into average bitrate in kbps.
-    filesize  Estimates filesize based on average bitrate in kbps.
+    bitrate        Converts a desired filesize into average bitrate in kbps.
+    edition-namer  Outputs an xml file to name editions in a Mastroka Video file.
+    filesize       Estimates filesize based on average bitrate in kbps.
 
 
 checker
@@ -159,6 +160,27 @@ Options:
 Usage:
 
     $ python fansub_utils.py bitrate [OPTIONS]
+
+
+
+edition-namer
+-------------
+Outputs an xml file to name editions in a Mastroka Video file.
+
+Requires the EditionUIDs from a chapter file.
+
+In order to properly mux this file into your .mkv file, add this file
+under 'Global tags' under Output > General in the MKVToolNix GUI or with
+`--global-tags file-name` via the command line.
+
+Options:
+    -F, --file      Output filename with xml extension.
+    -L, --language  Language tag for edition names (see ISO-639-2). (eng by
+                    default)
+
+Usage:
+
+    $ python fansub_utils.py edition-namer [OPTIONS]
 
 
 
