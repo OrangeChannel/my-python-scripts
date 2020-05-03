@@ -192,5 +192,11 @@ def tournament():
     return combo_finder(chips, players, minchip, False, True)
 
 
+def blockchain_buyin_calc(desired_buyin: int):
+    """blockchain.poker clean buy-in calculator with 2.5/2.5% tournament rake"""
+    fee = desired_buyin / 19
+    return round(desired_buyin + fee)
+
+
 if __name__ == '__main__':
     combos = tournament()
