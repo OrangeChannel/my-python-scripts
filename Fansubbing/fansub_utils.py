@@ -1,6 +1,8 @@
 #!/usr/bin/python
 """
 Dependencies:
+    click :   https://click.palletsprojects.com/en/7.x/ OR `pip install click`
+
     fd :      https://www.archlinux.org/packages/community/x86_64/fd/ OR `cargo install fd-find`
     rhash :   https://www.archlinux.org/packages/extra/x86_64/rhash/
     rnr :     https://aur.archlinux.org/packages/rnr/ OR `cargo install rnr`
@@ -8,7 +10,7 @@ Dependencies:
     7z :      https://www.archlinux.org/packages/extra/x86_64/p7zip/
 """
 __author__ = 'Dave <orangechannel@pm.me>'
-__date__ = '9 April 2020'
+__date__ = '3 May 2020'
 
 from os import mkdir, rename, rmdir
 from re import search
