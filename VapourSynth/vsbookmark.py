@@ -1,17 +1,20 @@
 """VSEdit bookmark generator."""
 __author__ = 'Dave <orangechannel@pm.me>'
-__date__ = '6 February 2020'
+__date__ = '25 May 2020'
 
+import os
 import re
+from pathlib import Path
+from typing import Union
 
 import vapoursynth as vs
 
 core = vs.core
 
 
-def generate(clip: vs.VideoNode, script_name: str = None):
+def generate(clip: vs.VideoNode, /, script_path: Union[Path, str]):
     """
-    Generates keyframe bookmark file from clip.
+    Generates keyframe bookmark file from `clip`.
 
     Some of this stolen from kageru's generate_keyframes
     (https://github.com/Irrational-Encoding-Wizardry/kagefunc)
@@ -23,50 +26,53 @@ def generate(clip: vs.VideoNode, script_name: str = None):
         :sample type: ANY
         :subsampling: ANY
 
-    :param script_name: name of VSEdit script with no extension
+    :param script_path: path to active VSEdit script (can be input simply as `__file__`)
     """
-    if script_name is not None:
-        script_name += '.vpy.bookmarks'
-    else:
-        raise ValueError('generate: script_name needs to be specified')
+    if not Path(script_path).exists():
+        raise ValueError('generate: script path not found')
+    if os.path.splitext(script_path)[1] != '.vpy':
+        raise ValueError('generate: active script must be first saved as a `.vpy` file')
+    bookmarks_path = str(script_path) + '.bookmarks'
+
+    if Path(bookmarks_path).exists():
+        print('generate: bookmark file already exists')
+        return  # not super helpful as this doesn't print in the VSEdit log but prevents re-generating the bookmarks on second preview
 
     # speed up the analysis by resizing first
-    clip = core.resize.Bilinear(clip, 640, 360)
+    clip = core.resize.Point(clip, 640, 360, format=clip.format.replace(bits_per_sample=8))
     clip = core.wwxd.WWXD(clip)
     kf = '0'
     for i in range(1, clip.num_frames):
         if clip.get_frame(i).props.Scenechange == 1:
-            kf += ", %d" % i
+            kf += f', {i}'
 
-    text_file = open(script_name, "w")
+    text_file = open(bookmarks_path, 'w')
     text_file.write(kf)
     text_file.close()
 
 
-def convert(file_path: str = None, script_name: str = None):
+def convert(keyframe_path: Union[Path, str], script_path: Union[Path, str]):
     """
     Converts standard keyframe file to VSEdit bookmark format.
     Accepts WWXD qp-files and (SC)XviD keyframe files.
 
-    :param file_path: `'/path/to/keyframes.txt'`
-    :param script_name: name of VSEdit script with no extension
+    :param keyframe_path: `'/path/to/keyframes.txt'`
+    :param script_path: path to active VSEdit script (can be input simply as `__file__`)
     """
-    if script_name is not None:
-        script_name += '.vpy.bookmarks'
-    else:
-        raise ValueError('convert: script_name needs to be specified')
+    if os.path.splitext(script_path)[1] != '.vpy':
+        raise ValueError('generate: active script must be first saved as a `.vpy` file.')
+    bookmarks_path = str(script_path) + '.bookmarks'
 
-    if file_path is not None:
-        lines = [line.rstrip('\n') for line in open(file_path, 'r')]
+    if (keyframe_path := Path(keyframe_path)).exists():
+        lines = [line.rstrip() for line in keyframe_path.open()]
         lines = list(filter(None, lines))
 
         if 'WWXD' in lines[0]:
             kf = '0'
             for i in range(2, len(lines)):
                 match = re.search(r'\d+', lines[i])
-                match = match[0] if match else ''
-                if match is not '':
-                    kf += (', ' + match)
+                if match:
+                    kf += (', ' + match[0])
         elif 'XviD' in lines[0]:
             count = 0
             kf = ''
@@ -81,8 +87,8 @@ def convert(file_path: str = None, script_name: str = None):
         else:
             raise IOError('convert: keyframe file format could not be read')
     else:
-        raise ValueError('convert: file_path needs to be specified')
+        raise ValueError('convert: keyframe_path needs to be specified')
 
-    text_file = open(script_name, 'w')
+    text_file = open(bookmarks_path, 'w')
     text_file.write(kf)
     text_file.close()
